@@ -60,6 +60,8 @@ const Products = () => {
       const response = await productsAPI.getAll();
       const data = response.data;
 
+      console.log('Raw products API response:', response);
+
       // Handle different response structures (same as admin components)
       let productsData;
 
@@ -212,7 +214,10 @@ const Products = () => {
                           variant='outlined'
                           size='small'
                           startIcon={<Visibility />}
-                          onClick={() => navigate(`/products/${product.id}`)}
+                          onClick={() => {
+                            console.log('Navigating to product with id:', product.id);
+                            navigate(`/products/${product.id}`);
+                          }}
                           sx={{ flex: 1 }}
                         >
                           View Details

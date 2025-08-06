@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   Container,
@@ -31,62 +31,70 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('ProductDetails useEffect - id:', id);
+    
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching product with id:', id);
+        const response = await productsAPI.getById(id);
+        console.log('Product API response:', response);
+        const data = response.data;
+
+        // Handle different response structures
+        let productData;
+        if (data.data) {
+          productData = data.data;
+        } else {
+          productData = data;
+        }
+
+        console.log('Product data:', productData);
+        setProduct(productData);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        setError('Product not found');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchProductImages = async () => {
+      try {
+        console.log('Fetching product images for id:', id);
+        const response = await productImagesAPI.getByProductId(id);
+        console.log('Product images API response:', response);
+        const data = response.data;
+
+        // Handle different response structures
+        let imagesData;
+        if (data.data && data.data.data) {
+          imagesData = data.data.data;
+        } else if (data.data) {
+          imagesData = data.data;
+        } else {
+          imagesData = data;
+        }
+
+        const imagesList = Array.isArray(imagesData) ? imagesData : [];
+        // Sort images to put primary first
+        const sortedImages = imagesList.sort((a, b) => {
+          if (a.isPrimary && !b.isPrimary) return -1;
+          if (!a.isPrimary && b.isPrimary) return 1;
+          return 0;
+        });
+
+        console.log('Processed images:', sortedImages);
+        setImages(sortedImages);
+      } catch (error) {
+        console.error('Error fetching product images:', error);
+        setImages([]);
+      }
+    };
+
     if (id) {
       fetchProduct();
       fetchProductImages();
-    }
-  }, [id, fetchProduct, fetchProductImages]);
-
-  const fetchProduct = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await productsAPI.getById(id);
-      const data = response.data;
-
-      // Handle different response structures
-      let productData;
-      if (data.data) {
-        productData = data.data;
-      } else {
-        productData = data;
-      }
-
-      setProduct(productData);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      setError('Product not found');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  const fetchProductImages = useCallback(async () => {
-    try {
-      const response = await productImagesAPI.getByProductId(id);
-      const data = response.data;
-
-      // Handle different response structures
-      let imagesData;
-      if (data.data && data.data.data) {
-        imagesData = data.data.data;
-      } else if (data.data) {
-        imagesData = data.data;
-      } else {
-        imagesData = data;
-      }
-
-      const imagesList = Array.isArray(imagesData) ? imagesData : [];
-      // Sort images to put primary first
-      const sortedImages = imagesList.sort((a, b) => {
-        if (a.isPrimary && !b.isPrimary) return -1;
-        if (!a.isPrimary && b.isPrimary) return 1;
-        return 0;
-      });
-
-      setImages(sortedImages);
-    } catch (error) {
-      console.error('Error fetching product images:', error);
-      setImages([]);
     }
   }, [id]);
 
